@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Terms of Service — MapLift</title>
+  <meta name="description" content="MapLift terms of service. Understand the terms and conditions for using our Google Business Profile management services.">
+  <link rel="icon" href="assets/img/favicon.svg" type="image/svg+xml">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            primary: '#2563EB',
+            'primary-hover': '#1D4ED8',
+            secondary: '#6C757D',
+            accent: '#E67E4B',
+            'accent-hover': '#D06A38',
+            bg: '#FFFFFF',
+            surface: '#F8F9FA',
+            text: '#212529',
+          },
+          fontFamily: {
+            heading: ['Inter', 'sans-serif'],
+            body: ['Inter', 'sans-serif'],
+          }
+        }
+      }
+    }
+  </script>
+  <link rel="stylesheet" href="assets/css/style.css">
+</head>
+<body data-page="terms" class="font-body text-text">
+
+  <!-- ========== NAV ========== -->
+  <nav class="fixed top-0 inset-x-0 z-40 bg-white/50 backdrop-blur transition-shadow">
+    <div class="max-w-6xl mx-auto flex items-center justify-between px-4 py-3">
+      <a href="index.html" class="flex items-center">
+        <img src="assets/img/logo.svg" alt="MapLift" class="h-8">
+      </a>
+      <div class="hidden md:flex items-center gap-8">
+        <a href="index.html" data-nav="home" class="text-sm font-medium hover:text-primary transition-colors">Home</a>
+        <a href="pricing.html" data-nav="pricing" class="text-sm font-medium hover:text-primary transition-colors">Pricing</a>
+        <a href="audit.html" data-nav="audit" class="text-sm font-medium hover:text-primary transition-colors">Free Audit</a>
+        <a href="login.html" data-nav="login" class="px-4 py-2 bg-primary text-white rounded-full text-sm font-semibold hover:bg-primary-hover transition-colors">Login</a>
+      </div>
+      <button id="hamburger" class="md:hidden p-2" aria-label="Open menu">
+        <svg class="w-6 h-6 text-primary" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" d="M4 6h16M4 12h16M4 18h16"/></svg>
+      </button>
+    </div>
+  </nav>
+
+  <!-- Mobile Nav Overlay -->
+  <div id="mobile-nav" class="mobile-nav-overlay">
+    <button class="close-btn absolute top-4 right-4 text-white p-2" aria-label="Close menu">
+      <svg class="w-8 h-8" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" d="M6 18L18 6M6 6l12 12"/></svg>
+    </button>
+    <a href="index.html" data-nav="home" class="text-xl font-medium">Home</a>
+    <a href="pricing.html" data-nav="pricing" class="text-xl font-medium">Pricing</a>
+    <a href="audit.html" data-nav="audit" class="text-xl font-medium">Free Audit</a>
+    <a href="login.html" data-nav="login" class="mt-4 px-6 py-3 bg-primary rounded-full text-white font-semibold">Login</a>
+  </div>
+
+  <!-- ========== CONTENT ========== -->
+  <section class="pt-28 pb-20 px-4">
+    <div class="max-w-4xl mx-auto">
+      <h1 class="text-3xl md:text-4xl font-bold text-text">Terms of Service</h1>
+      <p class="text-sm text-secondary mb-8">Last updated: April 19, 2026</p>
+
+      <h2 class="text-xl font-semibold text-text mt-8 mb-3">1. Acceptance of Terms</h2>
+      <p class="text-secondary text-sm leading-relaxed mb-4">By accessing or using the MapLift website and services, you agree to be bound by these Terms of Service. If you do not agree to these terms, please do not use our services.</p>
+
+      <h2 class="text-xl font-semibold text-text mt-8 mb-3">2. Description of Service</h2>
+      <p class="text-secondary text-sm leading-relaxed mb-4">MapLift provides Google Business Profile optimization and management services, including:</p>
+      <ul class="list-disc list-inside text-secondary text-sm space-y-2 mb-4">
+        <li>Profile setup, optimization, and ongoing management</li>
+        <li>Review monitoring and professional response management</li>
+        <li>Regular Google Business posts and content creation</li>
+        <li>Photo and media management</li>
+        <li>Monthly performance reporting and analytics</li>
+        <li>A dedicated account manager for your business</li>
+      </ul>
+
+      <h2 class="text-xl font-semibold text-text mt-8 mb-3">3. Subscription &amp; Pricing</h2>
+      <p class="text-secondary text-sm leading-relaxed mb-4">Our service is offered at a flat rate of $200 per month. Subscriptions are month-to-month with no long-term contracts. We reserve the right to change pricing with 30 days' advance notice.</p>
+
+      <h2 class="text-xl font-semibold text-text mt-8 mb-3">4. Billing &amp; Payment</h2>
+      <p class="text-secondary text-sm leading-relaxed mb-4">Payments are processed securely through Stripe. You will be billed monthly on your subscription anniversary date. If a payment fails, you will have a 7-day grace period to update your payment information before service is paused.</p>
+
+      <h2 class="text-xl font-semibold text-text mt-8 mb-3">5. Cancellation</h2>
+      <p class="text-secondary text-sm leading-relaxed mb-4">You may cancel your subscription at any time with no cancellation fees. Service will continue through the end of your current billing period. No prorated refunds are provided for partial billing periods.</p>
+
+      <h2 class="text-xl font-semibold text-text mt-8 mb-3">6. User Responsibilities</h2>
+      <p class="text-secondary text-sm leading-relaxed mb-4">As a user of our service, you agree to:</p>
+      <ul class="list-disc list-inside text-secondary text-sm space-y-2 mb-4">
+        <li>Provide accurate and complete business information</li>
+        <li>Grant necessary access to your Google Business Profile</li>
+        <li>Respond to requests for information or approval in a timely manner</li>
+        <li>Not provide content that infringes on the rights of others or violates any laws</li>
+      </ul>
+
+      <h2 class="text-xl font-semibold text-text mt-8 mb-3">7. Intellectual Property</h2>
+      <p class="text-secondary text-sm leading-relaxed mb-4">MapLift retains ownership of its platform, tools, and proprietary methodologies. You retain full ownership of your business data, profile content, and any materials you provide to us.</p>
+
+      <h2 class="text-xl font-semibold text-text mt-8 mb-3">8. Limitation of Liability</h2>
+      <p class="text-secondary text-sm leading-relaxed mb-4">MapLift shall not be liable for any indirect, incidental, special, consequential, or punitive damages arising from the use of our services. Our total liability shall not exceed the total fees paid by you in the three months preceding the claim. We do not guarantee specific search rankings or business outcomes.</p>
+
+      <h2 class="text-xl font-semibold text-text mt-8 mb-3">9. Termination</h2>
+      <p class="text-secondary text-sm leading-relaxed mb-4">Either party may terminate the service agreement at any time. Upon termination, full access to your Google Business Profile will be returned to you. We will retain your data for 30 days after termination, after which it will be permanently deleted.</p>
+
+      <h2 class="text-xl font-semibold text-text mt-8 mb-3">10. Governing Law</h2>
+      <p class="text-secondary text-sm leading-relaxed mb-4">These Terms of Service shall be governed by and construed in accordance with the laws of the United States. Any disputes arising from these terms shall be resolved in the appropriate courts.</p>
+
+      <h2 class="text-xl font-semibold text-text mt-8 mb-3">Contact</h2>
+      <p class="text-secondary text-sm leading-relaxed mb-4">If you have questions about these Terms of Service, please contact us at <a href="mailto:support@maplift.us" class="text-accent hover:underline">support@maplift.us</a>.</p>
+    </div>
+  </section>
+
+  <!-- ========== FOOTER ========== -->
+  <footer class="bg-gray-900 text-white py-12 px-4">
+    <div class="max-w-5xl mx-auto text-center">
+      <img src="assets/img/logo.svg" alt="MapLift" class="h-8 mx-auto">
+      <p class="mt-2 text-gray-400 text-sm">We Drill. You Close.</p>
+      <div class="mt-6 flex justify-center gap-6 text-sm text-gray-400">
+        <a href="privacy.html" class="hover:text-white transition-colors">Privacy Policy</a>
+        <a href="terms.html" class="hover:text-white transition-colors">Terms of Service</a>
+      </div>
+      <p class="mt-6 text-gray-500 text-xs">&copy; 2026 MapLift.us. All rights reserved.</p>
+    </div>
+  </footer>
+
+  <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+  <script src="assets/js/main.js"></script>
+</body>
+</html>

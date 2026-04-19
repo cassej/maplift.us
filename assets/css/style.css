@@ -1,0 +1,136 @@
+/* ============================================
+   MapLift — Custom Styles (beyond Tailwind)
+   ============================================ */
+
+/* --- Design Tokens --- */
+:root {
+  --color-primary: #2563EB;
+  --color-primary-hover: #1D4ED8;
+  --color-secondary: #6C757D;
+  --color-accent: #E67E4B;
+  --color-accent-hover: #D06A38;
+  --color-bg: #FFFFFF;
+  --color-surface: #F8F9FA;
+  --color-text: #212529;
+  --font-heading: 'Inter', sans-serif;
+  --font-body: 'Inter', sans-serif;
+}
+
+/* --- Base --- */
+html { scroll-behavior: smooth; }
+
+body {
+  font-family: var(--font-body);
+  color: var(--color-text);
+  background: var(--color-bg);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--font-heading);
+}
+
+/* --- Fade-in-up animation --- */
+.fade-in-up {
+  opacity: 0;
+  transform: translateY(30px);
+  transition: opacity 0.6s ease-out, transform 0.6s ease-out;
+}
+.fade-in-up.visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* --- Stagger children --- */
+.stagger-children .fade-in-up:nth-child(1) { transition-delay: 0ms; }
+.stagger-children .fade-in-up:nth-child(2) { transition-delay: 100ms; }
+.stagger-children .fade-in-up:nth-child(3) { transition-delay: 200ms; }
+.stagger-children .fade-in-up:nth-child(4) { transition-delay: 300ms; }
+.stagger-children .fade-in-up:nth-child(5) { transition-delay: 400ms; }
+.stagger-children .fade-in-up:nth-child(6) { transition-delay: 500ms; }
+.stagger-children .fade-in-up:nth-child(7) { transition-delay: 600ms; }
+
+/* --- Mobile Nav Overlay --- */
+.mobile-nav-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  background: var(--color-primary);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.3s ease;
+}
+.mobile-nav-overlay.active {
+  opacity: 1;
+  pointer-events: auto;
+}
+.mobile-nav-overlay a {
+  color: #fff;
+  font-size: 1.25rem;
+  padding: 0.75rem 0;
+}
+body.nav-open {
+  overflow: hidden;
+}
+
+/* --- Active Nav Link --- */
+[data-page="home"] nav a[data-nav="home"],
+[data-page="pricing"] nav a[data-nav="pricing"],
+[data-page="audit"] nav a[data-nav="audit"],
+[data-page="login"] nav a[data-nav="login"] {
+  color: var(--color-accent);
+}
+
+/* --- FAQ Accordion --- */
+.faq-answer {
+  max-height: 0;
+  overflow: hidden;
+  transition: max-height 0.3s ease;
+}
+.faq-item.open .faq-answer {
+  max-height: 500px;
+}
+.faq-icon {
+  transition: transform 0.3s ease;
+}
+.faq-item.open .faq-icon {
+  transform: rotate(180deg);
+}
+
+/* --- Form Inputs --- */
+.form-input {
+  width: 100%;
+  padding: 0.75rem 1rem;
+  border: 1px solid #D1D5DB;
+  border-radius: 0.5rem;
+  background: #fff;
+  font-family: var(--font-body);
+  font-size: 1rem;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+.form-input:focus {
+  outline: none;
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
+}
+.form-input.error {
+  border-color: #EF4444;
+  box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.15);
+}
+
+/* --- Hero Glow --- */
+.text-glow {
+  text-shadow: 0 0 30px #FFFFFF;
+}
+
+/* --- Utility --- */
+.text-primary { color: var(--color-primary); }
+.text-accent { color: var(--color-accent); }
+.bg-primary { background-color: var(--color-primary); }
+.bg-accent { background-color: var(--color-accent); }
+.bg-surface { background-color: var(--color-surface); }
