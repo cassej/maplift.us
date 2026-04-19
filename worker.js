@@ -22,7 +22,7 @@ export default {
       );
 
       if (!tgRes.ok) {
-        return new Response(JSON.stringify({ ok: false }), {
+        return new Response(JSON.stringify({ ok: false, res: tgRes }), {
           status: 502,
           headers: { 'Content-Type': 'application/json' },
         });
