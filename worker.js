@@ -17,7 +17,7 @@ export default {
         {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ chat_id: 237296040, text, parse_mode: 'Markdown' }),
+          body: JSON.stringify({ chat_id: 237296040, text }),
         }
       );
 
