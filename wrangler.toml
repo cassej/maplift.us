@@ -1,4 +1,4 @@
-name = "maplift"
+name = "mapliftus"
 compatibility_date = "2026-04-18"
 main = "worker.js"
 
