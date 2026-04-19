@@ -70,31 +70,19 @@
     <div class="max-w-lg mx-auto">
       <div class="text-center mb-8 fade-in-up">
         <h1 class="text-3xl md:text-4xl font-bold text-text">Get Your Free Audit</h1>
-        <p class="mt-3 text-secondary">We'll analyze your Google Business Profile and send you a detailed report within 24 hours.</p>
+        <p class="mt-3 text-secondary">Paste your Google Maps link and we'll send you a detailed audit report within 24 hours.</p>
       </div>
 
       <div id="audit-form-wrap" class="bg-white rounded-3xl shadow-sm p-6 md:p-8 fade-in-up">
         <form id="audit-form" novalidate>
           <div class="space-y-5">
             <div>
-              <label for="audit-name" class="block text-sm font-medium text-text mb-1">Name <span class="text-red-500">*</span></label>
-              <input type="text" id="audit-name" name="name" required class="form-input" placeholder="John Smith">
-            </div>
-            <div>
-              <label for="audit-business" class="block text-sm font-medium text-text mb-1">Business Name <span class="text-red-500">*</span></label>
-              <input type="text" id="audit-business" name="business" required class="form-input" placeholder="Smith's Auto Repair">
-            </div>
-            <div>
-              <label for="audit-url" class="block text-sm font-medium text-text mb-1">Website URL <span class="text-red-500">*</span></label>
-              <input type="url" id="audit-url" name="url" required class="form-input" placeholder="https://example.com">
-            </div>
-            <div>
               <label for="audit-email" class="block text-sm font-medium text-text mb-1">Email <span class="text-red-500">*</span></label>
               <input type="email" id="audit-email" name="email" required class="form-input" placeholder="john@example.com">
             </div>
             <div>
-              <label for="audit-phone" class="block text-sm font-medium text-text mb-1">Phone</label>
-              <input type="tel" id="audit-phone" name="phone" class="form-input" placeholder="(555) 123-4567">
+              <label for="audit-maps" class="block text-sm font-medium text-text mb-1">Google Maps Link <span class="text-red-500">*</span></label>
+              <input type="url" id="audit-maps" name="mapsUrl" required class="form-input" placeholder="https://maps.google.com/...">
             </div>
           </div>
           <button type="submit" class="mt-6 w-full px-6 py-3 bg-primary text-white rounded-full font-semibold text-lg hover:bg-primary-hover transition-colors">Send My Free Audit</button>

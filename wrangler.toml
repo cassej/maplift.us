@@ -1,5 +1,6 @@
 name = "maplift"
 compatibility_date = "2026-04-18"
+main = "worker.js"
 
 [assets]
 directory = "."
