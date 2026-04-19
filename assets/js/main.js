@@ -56,4 +56,27 @@ $(function () {
     if (!wasOpen) $item.addClass('open');
   });
 
+  // --- Cookie Consent Banner ---
+  if (!document.cookie.split(';').some(function (c) { return c.trim().indexOf('cookie_consent=') === 0; })) {
+    var $banner = $(
+      '<div class="cookie-banner">' +
+        '<p>We use essential cookies to make our site work. With your consent, we may also use non-essential cookies to improve user experience and analyze website traffic. By clicking "Accept," you agree to our website\'s cookie use as described in our <a href="/cookies">Cookie Policy</a>.</p>' +
+        '<div style="display:flex;gap:.5rem;flex-shrink:0;">' +
+          '<button class="cookie-btn cookie-btn--accept">Accept</button>' +
+          '<button class="cookie-btn cookie-btn--decline">Decline</button>' +
+        '</div>' +
+      '</div>'
+    );
+    $('body').append($banner);
+
+    $banner.find('.cookie-btn--accept').on('click', function () {
+      document.cookie = 'cookie_consent=accepted;path=/;max-age=31536000;SameSite=Lax';
+      $banner.remove();
+    });
+    $banner.find('.cookie-btn--decline').on('click', function () {
+      document.cookie = 'cookie_consent=declined;path=/;max-age=31536000;SameSite=Lax';
+      $banner.remove();
+    });
+  }
+
 });
