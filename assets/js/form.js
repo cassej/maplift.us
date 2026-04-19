@@ -64,6 +64,49 @@ $(function () {
   });
 });
 
+// --- Contact Form ---
+$(function () {
+  var $contactForm = $('#contact-form');
+  if (!$contactForm.length) return;
+
+  $contactForm.on('submit', function (e) {
+    e.preventDefault();
+    clearErrors($contactForm);
+
+    var valid = true;
+    var $email   = $('#contact-email');
+    var $message = $('#contact-message');
+
+    if (!isValidEmail($email.val())) { showError($email, 'Enter a valid email'); valid = false; }
+    if (!$message.val().trim()) { showError($message, 'Message is required'); valid = false; }
+
+    if (!valid) return;
+
+    var $btn = $contactForm.find('button[type="submit"]');
+    $btn.prop('disabled', true).text('Sending...');
+
+    fetch('/api/contact', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email: $email.val().trim(), message: $message.val().trim() }),
+    })
+      .then(function (res) { return res.json(); })
+      .then(function (data) {
+        if (data.ok) {
+          $contactForm.hide();
+          $('#contact-success').removeClass('hidden');
+        } else {
+          alert(data.error || 'Something went wrong. Please try again.');
+          $btn.prop('disabled', false).text('Send Message');
+        }
+      })
+      .catch(function () {
+        alert('Network error. Please try again.');
+        $btn.prop('disabled', false).text('Send Message');
+      });
+  });
+});
+
 // --- Login Form ---
 $(function () {
   var $loginForm = $('#login-form');
