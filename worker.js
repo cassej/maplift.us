@@ -68,6 +68,12 @@ export default {
       });
     }
 
-    return env.ASSETS.fetch(request);
+    const res = await env.ASSETS.fetch(request);
+
+    if (res.status === 404) {
+      return env.ASSETS.fetch(new Request(new URL('/404.html', request.url).toString()));
+    }
+
+    return res;
   },
 };
