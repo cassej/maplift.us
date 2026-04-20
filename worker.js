@@ -64,10 +64,7 @@ export default {
             });
             if (embedRes.ok) {
               const html = await embedRes.text();
-              const extra = parseEmbedHtml(html);
-              data.rating = extra.rating;
-              data.reviews = extra.reviews;
-              data.address = extra.address;
+              data = parseEmbedHtml(html)
             }
           } catch (_) {
             // Non-critical — return what we have
