@@ -44,7 +44,7 @@ export default {
         const finalUrl = response.url;
 
         // Parse the expanded URL into data + embed
-        const data = parseMapUrl(finalUrl);
+        let data = parseMapUrl(finalUrl);
 
         if (!data.lat || !data.lng) {
           return new Response(JSON.stringify({ ok: false, error: 'Could not extract coordinates from the expanded URL.' }), {
