@@ -56,8 +56,29 @@ $(function () {
     if (!wasOpen) $item.addClass('open');
   });
 
+  // --- Google Analytics (consent-gated) ---
+  function loadAnalytics() {
+    var s1 = document.createElement('script');
+    s1.async = true;
+    s1.src = 'https://www.googletagmanager.com/gtag/js?id=G-ZZZ07H1EPP';
+    document.head.appendChild(s1);
+
+    window.dataLayer = window.dataLayer || [];
+    function gtag() { dataLayer.push(arguments); }
+    gtag('js', new Date());
+    gtag('config', 'G-ZZZ07H1EPP');
+  }
+
   // --- Cookie Consent Banner ---
-  if (!document.cookie.split(';').some(function (c) { return c.trim().indexOf('cookie_consent=') === 0; })) {
+  function hasConsent() {
+    return document.cookie.split(';').some(function (c) {
+      return c.trim().indexOf('cookie_consent=accepted') === 0;
+    });
+  }
+
+  if (hasConsent()) {
+    loadAnalytics();
+  } else if (!document.cookie.split(';').some(function (c) { return c.trim().indexOf('cookie_consent=') === 0; })) {
     var $banner = $(
       '<div class="cookie-banner">' +
         '<p>We use essential cookies to make our site work. With your consent, we may also use non-essential cookies to improve user experience and analyze website traffic. By clicking "Accept," you agree to our website\'s cookie use as described in our <a href="/cookies">Cookie Policy</a>.</p>' +
@@ -71,6 +92,7 @@ $(function () {
 
     $banner.find('.cookie-btn--accept').on('click', function () {
       document.cookie = 'cookie_consent=accepted;path=/;max-age=31536000;SameSite=Lax';
+      loadAnalytics();
       $banner.remove();
     });
     $banner.find('.cookie-btn--decline').on('click', function () {
