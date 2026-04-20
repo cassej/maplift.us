@@ -4,13 +4,62 @@ export default {
 
     // ... (ваши существующие методы /api/contact и /api/audit) ...
     if (request.method === 'POST' && url.pathname === '/api/contact') {
-      // ... ваш код ...
-      return new Response('Contact OK');
+      return new Response(JSON.stringify({ ok: true }), {
+        headers: { 'Content-Type': 'application/json' },
+      });
     }
 
     if (request.method === 'POST' && url.pathname === '/api/audit') {
-      // ... ваш код ...
-      return new Response('Audit OK');
+      try {
+        const body = await request.json();
+        if (!body.email || !body.mapsUrl) {
+          return new Response(JSON.stringify({ ok: false, error: 'Email and mapsUrl are required' }), {
+            status: 400,
+            headers: { 'Content-Type': 'application/json' },
+          });
+        }
+
+        // Resolve short URL → expanded URL
+        let finalUrl = body.mapsUrl;
+        for (let i = 0; i < 5; i++) {
+          const res = await fetch(finalUrl, { method: 'GET', redirect: 'manual' });
+          if (res.status >= 300 && res.status < 400) {
+            const loc = res.headers.get('Location');
+            if (loc) { finalUrl = new URL(loc, finalUrl).href; continue; }
+          }
+          finalUrl = res.url || finalUrl;
+          break;
+        }
+
+        // Build embed URL and fetch business data
+        let mapsData = {};
+        const embedUrl = parseMapUrl(finalUrl);
+        if (embedUrl) {
+          try {
+            const embedRes = await fetch(embedUrl, {
+              headers: {
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
+                'Accept-Language': 'en-US,en;q=0.9',
+              },
+            });
+            const html = await embedRes.text();
+            mapsData = parseEmbedHtml(html);
+          } catch (_) {}
+        }
+
+        // Send to Telegram
+        const text = formatAuditMessage(body.email, finalUrl, mapsData);
+        await sendTelegram(env, text);
+
+        return new Response(JSON.stringify({ ok: true }), {
+          headers: { 'Content-Type': 'application/json' },
+        });
+      } catch (e) {
+        return new Response(JSON.stringify({ ok: false, error: e.message }), {
+          status: 500,
+          headers: { 'Content-Type': 'application/json' },
+        });
+      }
     }
 
     // --- MAPS INFO: redirect → parse → embed ---
@@ -316,4 +365,68 @@ function findBizArray(obj) {
   }
 
   return null;
+}
+
+/**
+ * Send message to Telegram chat via bot API
+ */
+async function sendTelegram(env, text) {
+  const token = env.TELEGRAM_BOT_TOKEN;
+  const chatId = env.TELEGRAM_CHAT_ID;
+  if (!token || !chatId) {
+    console.warn('Telegram secrets not configured');
+    return;
+  }
+  await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      chat_id: chatId,
+      text,
+      parse_mode: 'HTML',
+      disable_web_page_preview: false,
+    }),
+  });
+}
+
+/**
+ * Format audit notification message for Telegram
+ */
+function formatAuditMessage(email, mapsUrl, d) {
+  const stars = d.rating ? '⭐'.repeat(Math.round(d.rating)) + ` ${d.rating}` : '—';
+  const reviews = d.reviews ? `${d.reviews} reviews` : '—';
+  const name = d.name || 'Unknown';
+  const address = d.address || '—';
+  const phone = d.phone || '—';
+  const category = d.category || '—';
+
+  let hoursText = '—';
+  if (d.hours && d.hours.length) {
+    hoursText = d.hours.map(h => {
+      const label = h.dayName || '';
+      const time = h.hoursText || 'Closed';
+      return `${label}: ${time}`;
+    }).join('\n            ');
+  }
+
+  let coords = '—';
+  if (d.coords) {
+    coords = `${d.coords.lat}, ${d.coords.lng}`;
+  }
+
+  return `📋 <b>New Audit Request</b>
+
+<b>Client:</b> ${email}
+
+<b>Business:</b> ${name}
+<b>Category:</b> ${category}
+<b>Rating:</b> ${stars} (${reviews})
+<b>Address:</b> ${address}
+<b>Phone:</b> ${phone}
+<b>Coords:</b> ${coords}
+
+<b>Hours:</b>
+            ${hoursText}
+
+<b>Google Maps:</b> ${mapsUrl}`;
 }
