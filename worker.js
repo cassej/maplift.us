@@ -171,47 +171,79 @@ function parseMapUrl(urlStr) {
 }
 
 /**
- * Parse embed page HTML for rating, reviews, address
+ * Parse embed page HTML for rating, reviews, address, phone, category
+ * Data lives inside initEmbed([...]) as a deeply nested JS array
  */
 function parseEmbedHtml(html) {
-  const extra = { rating: null, reviews: null, address: null };
+  const extra = { rating: null, reviews: null, address: null, phone: null, category: null };
 
   try {
-    // 1. JSON-LD structured data
-    const jsonLdMatch = html.match(/<script[^>]*type="application\/ld\+json"[^>]*>([\s\S]*?)<\/script>/i);
-    if (jsonLdMatch) {
-      try {
-        const jsonData = JSON.parse(jsonLdMatch[1]);
+    const initMatch = html.match(/initEmbed\((\[[\s\S]*?\])\);?\s*\n?\s*function onApiLoad/);
+    if (!initMatch) return extra;
 
-        if (jsonData.address && jsonData.address.streetAddress) {
-          extra.address = `${jsonData.address.streetAddress}, ${jsonData.address.addressLocality || ''} ${jsonData.address.postalCode || ''}`.trim();
-        }
+    let jsonStr = initMatch[1].replace(/undefined/g, 'null');
+    const arr = JSON.parse(jsonStr);
 
-        if (jsonData.aggregateRating) {
-          extra.rating = jsonData.aggregateRating.ratingValue;
-          extra.reviews = jsonData.aggregateRating.reviewCount;
-        }
-      } catch (_) {}
+    // Find the business-data array: contains a number (1-5) followed by "X reviews"
+    const biz = findBizArray(arr);
+    if (!biz) return extra;
+
+    // biz structure:
+    //  [0]  [placeId, fullTitle, [lat,lng], numericId]
+    //  [1]  name
+    //  [2]  [addrLine, country]
+    //  [3]  rating (number)
+    //  [4]  "X reviews" (string)
+    //  [7]  phone
+    //  [12] category
+    //  [13] full address
+
+    if (typeof biz[3] === 'number') extra.rating = biz[3];
+
+    if (typeof biz[4] === 'string') {
+      const m = biz[4].match(/(\d+(?:,\d+)?)/);
+      if (m) extra.reviews = m[1];
     }
 
-    // 2. Fallback regex if JSON-LD didn't have data
-    if (!extra.reviews) {
-      const reviewMatch = html.match(/(\d+(?:,\d+)?)\s+reviews?/i);
-      if (reviewMatch) extra.reviews = reviewMatch[1];
-
-      const ratingMatch = html.match(/(\d+\.\d+)\s+stars?/i);
-      if (ratingMatch) extra.rating = ratingMatch[1];
+    if (Array.isArray(biz[2]) && biz[2].length >= 2) {
+      extra.address = biz[2].filter(Boolean).join(', ');
     }
 
-    // 3. Fallback for address
-    if (!extra.address) {
-      const addrMatch = html.match(/"address"\s*:\s*"([^"]+)"/);
-      if (addrMatch) extra.address = addrMatch[1];
-    }
+    if (typeof biz[7] === 'string') extra.phone = biz[7];
+    if (typeof biz[12] === 'string') extra.category = biz[12];
+
+    // Prefer full address from [13] if available
+    if (typeof biz[13] === 'string') extra.address = biz[13];
 
   } catch (e) {
     console.error('parseEmbedHtml error:', e);
   }
 
   return extra;
+}
+
+/**
+ * Recursively find the business-data array:
+ * element[3] is a number 1-5 AND element[4] is a string matching "X reviews"
+ */
+function findBizArray(obj) {
+  if (!obj) return null;
+
+  if (Array.isArray(obj)) {
+    if (typeof obj[3] === 'number' && obj[3] >= 1 && obj[3] <= 5 &&
+        typeof obj[4] === 'string' && /^\d[\d,]*\s+reviews?$/i.test(obj[4])) {
+      return obj;
+    }
+    for (let i = 0; i < obj.length; i++) {
+      const found = findBizArray(obj[i]);
+      if (found) return found;
+    }
+  } else if (typeof obj === 'object') {
+    for (const key in obj) {
+      const found = findBizArray(obj[key]);
+      if (found) return found;
+    }
+  }
+
+  return null;
 }
