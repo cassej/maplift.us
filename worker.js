@@ -68,12 +68,6 @@ export default {
       });
     }
 
-    const res = await env.ASSETS.fetch(request);
-
-    if (res.status === 404) {
-      return env.ASSETS.fetch(new Request(new URL('/404.html', request.url).toString()));
-    }
-
-    return res;
+    return new Response('Not Found', { status: 404 });
   },
 };
