@@ -34,42 +34,40 @@ export default {
           });
         }
 
-        // Follow redirects — response.url is the expanded Google Maps URL
-        const response = await fetch(targetUrl, {
-          method: 'GET',
-          redirect: 'follow',
-          cf: { cacheTtl: 86400, cacheEverything: true },
-        });
+        // Follow redirects manually — only read Location header, no body download
+        let finalUrl = targetUrl;
+        for (let i = 0; i < 5; i++) {
+          const res = await fetch(finalUrl, { method: 'GET', redirect: 'manual' });
+          if (res.status >= 300 && res.status < 400) {
+            const loc = res.headers.get('Location');
+            if (loc) {
+              finalUrl = new URL(loc, finalUrl).href;
+              continue;
+            }
+          }
+          finalUrl = res.url || finalUrl;
+          break;
+        }
 
-        const finalUrl = response.url;
-
-        // Parse the expanded URL into data + embed
-        let data = parseMapUrl(finalUrl);
-
-        if (!data.lat || !data.lng) {
-          return new Response(JSON.stringify({ ok: false, error: 'Could not extract coordinates from the expanded URL.' }), {
+        // Build embedUrl from the expanded URL
+        const embedUrl = parseMapUrl(finalUrl);
+        if (!embedUrl) {
+          return new Response(JSON.stringify({ ok: false, error: 'Could not build embed URL from the expanded URL.' }), {
             status: 404,
             headers: { 'Content-Type': 'application/json' },
           });
         }
 
-        // Fetch embed page to extract rating, reviews, address from HTML
-        if (data.embedUrl) {
-          try {
-            const embedRes = await fetch(data.embedUrl, {
-              headers: {
-                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
-                'Accept-Language': 'en-US,en;q=0.9',
-              },
-            });
-            if (embedRes.ok) {
-              const html = await embedRes.text();
-              data = parseEmbedHtml(html)
-            }
-          } catch (_) {
-            // Non-critical — return what we have
-          }
-        }
+        // Fetch embed page to extract rating, reviews, address, etc. from HTML
+        const embedRes = await fetch(embedUrl, {
+          headers: {
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
+            'Accept-Language': 'en-US,en;q=0.9',
+          },
+        });
+        const html = await embedRes.text();
+        const data = parseEmbedHtml(html);
+        data.embedUrl = embedUrl;
 
         return new Response(JSON.stringify({ ok: true, data }), {
           headers: { 'Content-Type': 'application/json' },
@@ -88,45 +86,36 @@ export default {
 };
 
 /**
- * Parse expanded Google Maps URL → extract fields + build embed URL
+ * Parse expanded Google Maps URL → build embed URL string
+ * Returns embedUrl string or null
  */
 function parseMapUrl(urlStr) {
-  const result = {
-    name: null,
-    lat: null,
-    lng: null,
-    placeId: null,
-    embedUrl: null
-  };
-
   try {
     const urlObj = new URL(urlStr);
     const lang = urlObj.searchParams.get('hl') || 'en';
 
     // 1. Coordinates from /@lat,lng,zoom
     const coordsMatch = urlStr.match(/@(-?\d+\.\d+),(-?\d+\.\d+),([\d.]+)z/);
-    if (!coordsMatch) return result;
+    if (!coordsMatch) return null;
 
-    result.lat = parseFloat(coordsMatch[1]);
-    result.lng = parseFloat(coordsMatch[2]);
+    const lat = parseFloat(coordsMatch[1]);
+    const lng = parseFloat(coordsMatch[2]);
     const zoom = parseFloat(coordsMatch[3]);
 
     // 2. Name from /place/Name/
     const nameMatch = urlStr.match(/\/place\/([^/@]+)/);
-    if (nameMatch && nameMatch[1]) {
-      result.name = decodeURIComponent(nameMatch[1].replace(/\+/g, ' '));
-    }
+    const name = nameMatch && nameMatch[1]
+      ? decodeURIComponent(nameMatch[1].replace(/\+/g, ' '))
+      : null;
 
     // 3. Place ID (hex format)
     const idMatch = urlStr.match(/0x[0-9a-fA-F]+:0x[0-9a-fA-F]+/);
-    if (idMatch) {
-      result.placeId = idMatch[0];
-    }
+    const placeId = idMatch ? idMatch[0] : null;
 
     // 4. Build embed URL
     const scale = 0.01 * Math.pow(2, (15 - zoom));
-    const encodedName = encodeURIComponent(result.name || 'Unknown Place');
-    const pidPart = result.placeId ? `!1s${result.placeId}` : '';
+    const encodedName = encodeURIComponent(name || 'Unknown Place');
+    const pidPart = placeId ? `!1s${placeId}` : '';
     const region = lang === 'en' ? 'US' : 'PA';
 
     const pb = [
@@ -134,8 +123,8 @@ function parseMapUrl(urlStr) {
       '!1m12',
       '!1m3',
       `!1d${(scale * 111000).toFixed(6)}`,
-      `!2d${result.lng}`,
-      `!3d${result.lat}`,
+      `!2d${lng}`,
+      `!3d${lat}`,
       '!2m3',
       '!1f0',
       '!2f0',
@@ -158,13 +147,12 @@ function parseMapUrl(urlStr) {
       `!2s${region}`,
     ].join('');
 
-    result.embedUrl = `https://www.google.com/maps/embed?pb=${pb}`;
+    return `https://www.google.com/maps/embed?pb=${pb}`;
 
   } catch (e) {
     console.error('parseMapUrl error:', e);
+    return null;
   }
-
-  return result;
 }
 
 /**
@@ -174,6 +162,7 @@ function parseMapUrl(urlStr) {
 function parseEmbedHtml(html) {
   // Структура для возврата
   const extra = {
+    name: null,
     rating: null,
     reviews: null,
     address: null,
@@ -224,7 +213,7 @@ function parseEmbedHtml(html) {
 
     // [1] - Название места (Short Name)
     if (typeof biz[1] === 'string') {
-      // extra.name = biz[1]; // Можно добавить, если нужно
+      extra.name = biz[1];
     }
 
     // [2] - Адрес частями [Street, Country]
