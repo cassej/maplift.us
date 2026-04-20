@@ -175,45 +175,107 @@ function parseMapUrl(urlStr) {
  * Data lives inside initEmbed([...]) as a deeply nested JS array
  */
 function parseEmbedHtml(html) {
-  const extra = { rating: null, reviews: null, address: null, phone: null, category: null };
+  // Структура для возврата
+  const extra = {
+    rating: null,
+    reviews: null,
+    address: null,
+    fullAddress: null,
+    phone: null,
+    category: null,
+    placeId: null,
+    coords: null,
+    hours: null
+  };
 
   try {
-    const initMatch = html.match(/initEmbed\((\[[\s\S]*?\])\);?\s*\n?\s*function onApiLoad/);
-    if (!initMatch) return extra;
+    // 1. Ищем блок initEmbed(...)
+    // Регулярка захватывает всё внутри скобок initEmbed
+    const initMatch = html.match(/initEmbed\(([\s\S]*?)\);?\s*\n?\s*function onApiLoad/);
 
-    let jsonStr = initMatch[1].replace(/undefined/g, 'null');
-    const arr = JSON.parse(jsonStr);
-
-    // Find the business-data array: contains a number (1-5) followed by "X reviews"
-    const biz = findBizArray(arr);
-    if (!biz) return extra;
-
-    // biz structure:
-    //  [0]  [placeId, fullTitle, [lat,lng], numericId]
-    //  [1]  name
-    //  [2]  [addrLine, country]
-    //  [3]  rating (number)
-    //  [4]  "X reviews" (string)
-    //  [7]  phone
-    //  [12] category
-    //  [13] full address
-
-    if (typeof biz[3] === 'number') extra.rating = biz[3];
-
-    if (typeof biz[4] === 'string') {
-      const m = biz[4].match(/(\d+(?:,\d+)?)/);
-      if (m) extra.reviews = m[1];
+    if (!initMatch) {
+      console.warn("initEmbed not found in HTML");
+      return extra;
     }
 
-    if (Array.isArray(biz[2]) && biz[2].length >= 2) {
+    let jsonStr = initMatch[1];
+
+    // Google иногда использует undefined в JS объектах, что невалидно для JSON
+    // Заменяем undefined на null
+    jsonStr = jsonStr.replace(/\bundefined\b/g, 'null');
+
+    // Парсим JSON
+    const rootArr = JSON.parse(jsonStr);
+
+    // 2. Находим массив с данными бизнеса
+    const biz = findBizArray(rootArr);
+
+    if (!biz) {
+      console.warn("Business data array not found");
+      return extra;
+    }
+
+    // --- ИЗВЛЕЧЕНИЕ ДАННЫХ ПО ИНДЕКСАМ ---
+
+    // [0] - Массив идентификаторов и координат
+    if (Array.isArray(biz[0])) {
+      extra.placeId = biz[0][0] || null; // Hex ID or CID
+      // [0][2] usually contains [lat, lng]
+      if (Array.isArray(biz[0][2]) && biz[0][2].length === 2) {
+        extra.coords = { lat: biz[0][2][0], lng: biz[0][2][1] };
+      }
+    }
+
+    // [1] - Название места (Short Name)
+    if (typeof biz[1] === 'string') {
+      // extra.name = biz[1]; // Можно добавить, если нужно
+    }
+
+    // [2] - Адрес частями [Street, Country]
+    if (Array.isArray(biz[2]) && biz[2].length > 0) {
       extra.address = biz[2].filter(Boolean).join(', ');
     }
 
-    if (typeof biz[7] === 'string') extra.phone = biz[7];
-    if (typeof biz[12] === 'string') extra.category = biz[12];
+    // [3] - Рейтинг (Number)
+    if (typeof biz[3] === 'number') {
+      extra.rating = biz[3];
+    }
 
-    // Prefer full address from [13] if available
-    if (typeof biz[13] === 'string') extra.address = biz[13];
+    // [4] - Количество отзывов (String "X reviews")
+    if (typeof biz[4] === 'string') {
+      const m = biz[4].match(/(\d+(?:,\d+)*)/);
+      if (m) extra.reviews = parseInt(m[1].replace(/,/g, ''), 10);
+    }
+
+    // [7] - Телефон
+    if (typeof biz[7] === 'string') {
+      extra.phone = biz[7];
+    }
+
+    // [12] - Категория (например, "Barber shop")
+    if (typeof biz[12] === 'string') {
+      extra.category = biz[12];
+    }
+
+    // [13] - Полный адрес (Priority over [2])
+    if (typeof biz[13] === 'string') {
+      extra.fullAddress = biz[13];
+      extra.address = biz[13]; // Перезаписываем address полным вариантом
+    }
+
+    // [38] - Часы работы (если есть)
+    // Структура: [ [DayName, DayNum, Date, [HoursString, [OpenMin, CloseMin]], isOpenToday, ...], ... ]
+    if (Array.isArray(biz[38])) {
+      extra.hours = biz[38].map(day => {
+        if (!Array.isArray(day)) return null;
+        return {
+          dayName: day[0],       // "Monday"
+          dayNum: day[1],        // 1
+          hoursText: day[3] ? day[3][0] : null, // "1–7:30 PM"
+          isOpen: day[4] === 1   // 1 = open today logic usually
+        };
+      }).filter(Boolean);
+    }
 
   } catch (e) {
     console.error('parseEmbedHtml error:', e);
@@ -223,25 +285,48 @@ function parseEmbedHtml(html) {
 }
 
 /**
- * Recursively find the business-data array:
- * element[3] is a number 1-5 AND element[4] is a string matching "X reviews"
+ * Рекурсивный поиск массива данных о бизнесе.
+ * Критерии:
+ * 1. Это массив.
+ * 2. Индекс [3] - число от 1 до 5 (рейтинг).
+ * 3. Индекс [4] - строка, содержащая слово "review" или "отзыв".
+ * 4. (Опционально) Индекс [0] существует и является массивом (для надежности).
  */
 function findBizArray(obj) {
   if (!obj) return null;
 
   if (Array.isArray(obj)) {
-    if (typeof obj[3] === 'number' && obj[3] >= 1 && obj[3] <= 5 &&
-        typeof obj[4] === 'string' && /^\d[\d,]*\s+reviews?$/i.test(obj[4])) {
-      return obj;
+    // Проверка основных критериев
+    const rating = obj[3];
+    const reviewStr = obj[4];
+
+    const isRatingValid = typeof rating === 'number' && rating >= 1 && rating <= 5;
+    const isReviewValid = typeof reviewStr === 'string' && /review/i.test(reviewStr);
+
+    if (isRatingValid && isReviewValid) {
+      // Дополнительная проверка: у настоящих данных бизнеса обычно есть [0] элемент с ID/Coords
+      // или [1] с названием. Это отсеет ложные срабатывания на мелких внутренних массивах.
+      if (Array.isArray(obj[0]) || typeof obj[1] === 'string') {
+        return obj;
+      }
     }
+
+    // Рекурсивный поиск по элементам массива
+    // Оптимизация: не идем слишком глубоко, если нашли похожее, но лучше проверить всё
     for (let i = 0; i < obj.length; i++) {
-      const found = findBizArray(obj[i]);
-      if (found) return found;
+      // Пропускаем примитивы для скорости
+      if (typeof obj[i] === 'object' && obj[i] !== null) {
+        const found = findBizArray(obj[i]);
+        if (found) return found;
+      }
     }
   } else if (typeof obj === 'object') {
+    // Если это объект, идем по ключам (в JSON от Google такое редко, обычно массивы, но на всякий случай)
     for (const key in obj) {
-      const found = findBizArray(obj[key]);
-      if (found) return found;
+      if (obj.hasOwnProperty(key)) {
+        const found = findBizArray(obj[key]);
+        if (found) return found;
+      }
     }
   }
 
