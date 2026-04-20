@@ -188,8 +188,7 @@ function parseEmbedHtml(html) {
   try {
     // 1. Ищем блок initEmbed(...)
     // Регулярка захватывает всё внутри скобок initEmbed
-    const initMatch = html.match(/initEmbed\(([\s\S]*?)\);?\s*\n?\s*function onApiLoad/);
-
+    const initMatch = html.match(/initEmbed\(([\s\S]*?)\);/);
     if (!initMatch) {
       console.warn("initEmbed not found in HTML");
       return extra;
