@@ -48,7 +48,7 @@ export default {
         }
 
         // Send to Telegram
-        const text = formatAuditMessage(body.email, finalUrl, mapsData);
+        const text = formatAuditMessage(body.email, body.mapsUrl, mapsData);
         await sendTelegram(env, text, mapsData.coords);
 
         return new Response(JSON.stringify({ ok: true }), {
@@ -297,16 +297,19 @@ function parseEmbedHtml(html) {
       extra.address = biz[13]; // Перезаписываем address полным вариантом
     }
 
-    // [38] - Часы работы (если есть)
-    // Структура: [ [DayName, DayNum, Date, [HoursString, [OpenMin, CloseMin]], isOpenToday, ...], ... ]
-    if (Array.isArray(biz[38])) {
-      extra.hours = biz[38].map(day => {
+    // Hours — search for array with day names
+    const dayPattern = /^(monday|tuesday|wednesday|thursday|friday|saturday|sunday|понедельник|вторник|среда|четверг|пятница|суббота|воскресенье)/i;
+    const hoursArr = findHoursArray(rootArr);
+    if (hoursArr) {
+      extra.hours = hoursArr.map(day => {
         if (!Array.isArray(day)) return null;
+        const dayName = day[0];
+        if (typeof dayName !== 'string' || !dayPattern.test(dayName)) return null;
         return {
-          dayName: day[0],       // "Monday"
-          dayNum: day[1],        // 1
-          hoursText: day[3] ? day[3][0] : null, // "1–7:30 PM"
-          isOpen: day[4] === 1   // 1 = open today logic usually
+          dayName: dayName,
+          dayNum: day[1],
+          hoursText: day[3] ? day[3][0] : null,
+          isOpen: day[4] === 1
         };
       }).filter(Boolean);
     }
@@ -368,8 +371,33 @@ function findBizArray(obj) {
 }
 
 /**
- * Send message + location to Telegram chat via bot API
+ * Find the hours array in embed data — an array of arrays where first elements are day names
  */
+function findHoursArray(obj) {
+  if (!obj) return null;
+
+  const dayPattern = /^(monday|tuesday|wednesday|thursday|friday|saturday|sunday|понедельник|вторник|среда|четверг|пятница|суббота|воскресенье)/i;
+
+  if (Array.isArray(obj)) {
+    // Check if this looks like an array of day entries
+    let dayCount = 0;
+    for (let i = 0; i < obj.length; i++) {
+      if (Array.isArray(obj[i]) && typeof obj[i][0] === 'string' && dayPattern.test(obj[i][0])) {
+        dayCount++;
+      }
+    }
+    if (dayCount >= 3) return obj;
+
+    // Recurse
+    for (let i = 0; i < obj.length; i++) {
+      if (typeof obj[i] === 'object' && obj[i] !== null) {
+        const found = findHoursArray(obj[i]);
+        if (found) return found;
+      }
+    }
+  }
+  return null;
+}
 async function sendTelegram(env, text, coords) {
   const token = env.TELEGRAM_BOT_TOKEN;
   const chatId = env.TELEGRAM_CHAT_ID;
