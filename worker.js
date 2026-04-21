@@ -305,11 +305,15 @@ function parseEmbedHtml(html) {
         if (!Array.isArray(day)) return null;
         const dayName = day[0];
         if (typeof dayName !== 'string' || !dayPattern.test(dayName)) return null;
+        // Extract clean hours text — strip trailing comma-separated numbers
+        let hText = null;
+        if (day[3]) {
+          const raw = Array.isArray(day[3]) ? String(day[3][0]) : String(day[3]);
+          hText = raw.replace(/,\d+.*$/, '').trim();
+        }
         return {
           dayName: dayName,
-          dayNum: day[1],
-          hoursText: day[3] ? day[3][0] : null,
-          isOpen: day[4] === 1
+          hoursText: hText || 'Closed',
         };
       }).filter(Boolean);
     }
@@ -446,11 +450,7 @@ function formatAuditMessage(email, mapsUrl, d) {
 
   let hoursText = '—';
   if (d.hours && d.hours.length) {
-    hoursText = d.hours.map(h => {
-      const label = h.dayName || '';
-      const time = h.hoursText || 'Closed';
-      return `${label}: ${time}`;
-    }).join('\n            ');
+    hoursText = d.hours.map(h => `${h.dayName}: ${h.hoursText}`).join('\n');
   }
 
   return `📋 <b>New Audit Request</b>
@@ -464,7 +464,7 @@ function formatAuditMessage(email, mapsUrl, d) {
 <b>Phone:</b> ${phone}
 
 <b>Hours:</b>
-            ${hoursText}
+${hoursText}
 
 <b>Google Maps:</b> ${mapsUrl}`;
 }
