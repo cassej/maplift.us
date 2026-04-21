@@ -11,5 +11,5 @@
     <text x="200" y="215" font-family="Inter, sans-serif" font-size="160" font-weight="bold">
         <tspan fill="#2563eb">ap</tspan><tspan fill="#e67e4b">Lift</tspan>
     </text>
-    <circle cx="506" cy="110" r="15" fill="#4ADE80"/>
+    <circle cx="506" cy="107" r="15" fill="#4ADE80"/>
 </svg>
