@@ -49,7 +49,7 @@ export default {
 
         // Send to Telegram
         const text = formatAuditMessage(body.email, body.mapsUrl, mapsData);
-        await sendTelegram(env, text, mapsData.coords);
+        await sendTelegram(env, text, mapsData.coords, mapsData.name || 'Unknown', mapsData.address || '');
 
         return new Response(JSON.stringify({ ok: true }), {
           headers: { 'Content-Type': 'application/json' },
@@ -398,7 +398,7 @@ function findHoursArray(obj) {
   }
   return null;
 }
-async function sendTelegram(env, text, coords) {
+async function sendTelegram(env, text, coords, venueTitle, venueAddress) {
   const token = env.TELEGRAM_BOT_TOKEN;
   const chatId = env.TELEGRAM_CHAT_ID;
   if (!token || !chatId) {
@@ -406,30 +406,31 @@ async function sendTelegram(env, text, coords) {
     return;
   }
 
-  // Text message
-  let res = await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      chat_id: chatId,
-      text,
-      parse_mode: 'HTML'
-    }),
-  });
-
-  // Location pin
   if (coords && coords.lat && coords.lng) {
-    await fetch(`https://api.telegram.org/bot${token}/sendLocation`, {
+    // Single message: venue with map pin + title + address
+    await fetch(`https://api.telegram.org/bot${token}/sendVenue`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         chat_id: chatId,
         latitude: coords.lat,
         longitude: coords.lng,
-        reply_to_message_id: res.message_id,
+        title: venueTitle,
+        address: venueAddress,
       }),
     });
   }
+
+  // Text message with full details
+  await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      chat_id: chatId,
+      text,
+      parse_mode: 'HTML',
+    }),
+  });
 }
 
 /**
