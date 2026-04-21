@@ -1,3 +1,5 @@
+import { buildAuditEmailHtml } from './email-template.js';
+
 export default {
   async fetch(request, env) {
     const url = new URL(request.url);
@@ -50,6 +52,9 @@ export default {
         // Send to Telegram
         const text = formatAuditMessage(body.email, body.mapsUrl, mapsData);
         await sendTelegram(env, text, mapsData.coords, mapsData.name || 'Unknown', mapsData.address || '');
+
+        // Send confirmation email to client
+        await sendAuditEmail(env, body.email, mapsData);
 
         return new Response(JSON.stringify({ ok: true }), {
           headers: { 'Content-Type': 'application/json' },
@@ -467,4 +472,33 @@ function formatAuditMessage(email, mapsUrl, d) {
 ${hoursText}
 
 <b>Google Maps:</b> ${mapsUrl}`;
+}
+
+/**
+ * Send audit confirmation email to client via Resend
+ */
+async function sendAuditEmail(env, toEmail, d) {
+  if (!env.RESEND_API_KEY) {
+    console.warn('RESEND_API_KEY not configured');
+    return;
+  }
+
+  const name = d.name || 'your business';
+  const subject = `Your MapLift Audit for ${name} is being prepared`;
+
+  const html = buildAuditEmailHtml(d);
+
+  await fetch('https://api.resend.com/emails', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${env.RESEND_API_KEY}`,
+    },
+    body: JSON.stringify({
+      from: 'MapLift <audit@maplift.us>',
+      to: [toEmail],
+      subject,
+      html,
+    }),
+  });
 }
