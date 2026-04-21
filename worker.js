@@ -49,7 +49,7 @@ export default {
 
         // Send to Telegram
         const text = formatAuditMessage(body.email, finalUrl, mapsData);
-        await sendTelegram(env, text);
+        await sendTelegram(env, text, mapsData.coords);
 
         return new Response(JSON.stringify({ ok: true }), {
           headers: { 'Content-Type': 'application/json' },
@@ -368,15 +368,17 @@ function findBizArray(obj) {
 }
 
 /**
- * Send message to Telegram chat via bot API
+ * Send message + location to Telegram chat via bot API
  */
-async function sendTelegram(env, text) {
+async function sendTelegram(env, text, coords) {
   const token = env.TELEGRAM_BOT_TOKEN;
   const chatId = env.TELEGRAM_CHAT_ID;
   if (!token || !chatId) {
     console.warn('Telegram secrets not configured');
     return;
   }
+
+  // Text message
   await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -387,6 +389,19 @@ async function sendTelegram(env, text) {
       disable_web_page_preview: false,
     }),
   });
+
+  // Location pin
+  if (coords && coords.lat && coords.lng) {
+    await fetch(`https://api.telegram.org/bot${token}/sendLocation`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        chat_id: chatId,
+        latitude: coords.lat,
+        longitude: coords.lng,
+      }),
+    });
+  }
 }
 
 /**
@@ -409,11 +424,6 @@ function formatAuditMessage(email, mapsUrl, d) {
     }).join('\n            ');
   }
 
-  let coords = '—';
-  if (d.coords) {
-    coords = `${d.coords.lat}, ${d.coords.lng}`;
-  }
-
   return `📋 <b>New Audit Request</b>
 
 <b>Client:</b> ${email}
@@ -423,7 +433,6 @@ function formatAuditMessage(email, mapsUrl, d) {
 <b>Rating:</b> ${stars} (${reviews})
 <b>Address:</b> ${address}
 <b>Phone:</b> ${phone}
-<b>Coords:</b> ${coords}
 
 <b>Hours:</b>
             ${hoursText}
