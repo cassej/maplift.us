@@ -165,7 +165,7 @@ ${hoursHtml}
 </table>
 
 <!-- Footer -->
-<table role="presentation" width="600" cellpadding="0" cellspacing="0" align="center" style="max-width:600px;background:#ffffff;border-top:1px solid #E5E7EB;border-radius:0 0 12px 12px;margin-bottom:40px;">
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" align="center" style="max-width:600px;background:#ffffff;border-top:1px solid #E5E7EB;border-radius:0 0 12px 12px;margin-bottom:40px;">
 <tr>
 <td align="center" style="padding:24px 40px;font-size:13px;color:#9CA3AF;line-height:20px;">
 MapLift &mdash; Get found on Google Maps.<br>
