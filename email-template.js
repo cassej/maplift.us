@@ -40,10 +40,10 @@ export function buildAuditEmailHtml(d) {
 <center style="width:100%;margin:0 auto;">
 
 <!-- Header -->
-<table role="presentation" width="600" cellpadding="0" cellspacing="0" align="center" style="max-width:600px;margin:0 auto;background:#ffffff;border-radius:12px 12px 0 0;margin-top:40px;">
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" align="center" style="max-width:600px;margin:0 auto;background:#ffffff;border-radius:12px 12px 0 0;margin-top:40px;">
 <tr>
 <td style="padding:32px 40px 24px 40px;border-bottom:1px solid #E5E7EB;">
-<img height="60" src="https://maplift.us/assets/img/logo.png" alt="MapLift">
+<img height="60" src="https://maplift.us/assets/img/logo.png" alt="MapLift" style="display:block;max-width:100%;height:auto;">
 </td>
 </tr>
 </table>
